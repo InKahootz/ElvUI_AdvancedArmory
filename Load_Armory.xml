@@ -1,0 +1,10 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<Script file="KnightFrame.lua"/>
+	<Script file="private.lua"/>
+	<Script file="Constants.lua"/>
+	
+	<Include file="CharacterArmory\Load_CharacterArmory.xml"/>
+	<!--<Include file="InspectArmory\Load_InspectArmory.xml"/>-->
+	
+	<Script file="Config.lua"/>
+</Ui>
