@@ -1,6 +1,6 @@
 ## Interface: 70200
 ## Author: InKahootz
-## Version: 0.1
+## Version: 0.2
 ## Title: |cff1784d1ElvUI|r |cff00b3ffAdvanced Armory|r
 ## Notes: Armory styled character frame
 ## RequiredDeps: ElvUI

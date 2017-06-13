@@ -1569,6 +1569,11 @@ function CA:UpdateSettings(part)
 				_G["CharacterArmory"][SlotName].SocketWarning:Size(db.Gem.WarningSize)
 			end
 		end
+		for i = 1, 3 do
+			if _G["CharacterArmory"]["ArtifactMonitor"] and _G["CharacterArmory"]["ArtifactMonitor"]["Socket"..i] then
+					_G["CharacterArmory"]["ArtifactMonitor"]["Socket"..i]:Size(db.Gem.SocketSize)
+			end
+		end
 	end
 	if part == "dur" or part == "all" then
 		for _, SlotName in pairs(Info.Armory_Constants.GearList) do
