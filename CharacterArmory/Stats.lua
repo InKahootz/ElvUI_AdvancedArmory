@@ -1,4 +1,3 @@
---local SLE, T, E, L, V, P, G = unpack(select(2, ...))
 local E, L, V, P, G = unpack(ElvUI)
 local KF, Info, Timer  = unpack(ElvUI_AdvancedArmory)
 if KF._Compatibility["DejaCharacterStats"] then return end

@@ -1,11 +1,13 @@
 local E, L, V, P, G = unpack(ElvUI);
---local SLE, T, E, L, V, P, G = unpack(select(2, ...))
---GLOBALS: SLE_ArmoryDB
+
+--GLOBALS: AA_ArmoryDB
 local _
 local _G = _G
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
-if not (select(2, GetAddOnInfo('ElvUI_KnightFrame')) and IsAddOnLoaded('ElvUI_KnightFrame')) then
+-- Incompatibility checker
+if not (select(2, GetAddOnInfo('ElvUI_KnightFrame')) and IsAddOnLoaded('ElvUI_KnightFrame')
+		or (select(2, GetAddOnInfo('ElvUI_SLE')) and IsAddOnLoaded('ElvUI_SLE'))) then
 	--<< INITIALIZE >>--
 	local AddOnName, Engine = ... --'ElvUI_KnightFrame', {}
 	local Info = {
@@ -319,7 +321,11 @@ if not (select(2, GetAddOnInfo('ElvUI_KnightFrame')) and IsAddOnLoaded('ElvUI_Kn
 	end
 
 	function KF:Initialize()
-		EP:RegisterPlugin(AddOnName, KF.InsertConfigTables)
+		if  not ((select(2, GetAddOnInfo('ElvUI_KnightFrame')) and IsAddOnLoaded('ElvUI_KnightFrame')) or
+			(select(2, GetAddOnInfo('ElvUI_SLE')) and IsAddOnLoaded('ElvUI_SLE'))) then 
+			EP:RegisterPlugin(AddOnName, KF.InsertConfigTables)
+		end
+		
 
 		for i = 1, #KF.Modules do
 			KF.Modules[(KF.Modules[i])]()
