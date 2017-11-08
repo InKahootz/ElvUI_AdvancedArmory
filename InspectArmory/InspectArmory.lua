@@ -3,6 +3,7 @@ local SLE, T, E, L, V, P, G = unpack(select(2, ...))
 local KF, Info, Timer = unpack(ElvUI_AdvancedArmory)
 local _G = _G
 local _
+local SOUNDKIT = SOUNDKIT
 
 --GLOBALS: CreateFrame, SLE_ArmoryDB, NotifyInspect, InspectUnit, UIParent, hooksecurefunc, UIDROPDOWNMENU_MENU_LEVEL
 local NUM_TALENT_COLUMNS,MAX_TALENT_GROUPS = NUM_TALENT_COLUMNS,MAX_TALENT_GROUPS
@@ -383,7 +384,11 @@ function IA:CreateInspectFrame()
 		self:SetClampedToScreen(true)
 		self:Point('CENTER', E.UIParent)
 		self:SetScript('OnHide', function()
-			PlaySound('igCharacterInfoClose')
+			if E.wowbuild < 24896 then --7.2.5
+				PlaySound('igCharacterInfoClose')
+			else --7.3
+				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
+			end
 			
 			if self.CurrentInspectData.Name then
 				local TableIndex = self.CurrentInspectData.Name..(IA.CurrentInspectData.Realm and IA.CurrentInspectData.Realm ~= '' and IA.CurrentInspectData.Realm ~= Info.MyRealm and '-'..IA.CurrentInspectData.Realm or '')
@@ -584,7 +589,7 @@ function IA:CreateInspectFrame()
 			_G["GameTooltip"]:Hide()
 		end)
 		self.TransmogViewButton:SetScript("OnClick", function(self)
-			PlaySound("igMainMenuOptionCheckBoxOn");
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 			DressUpSources(C_TransmogCollection.GetInspectSources());
 		end)
 	end
@@ -2267,7 +2272,7 @@ function IA:InspectFrame_DataSetting(DataTable)
 				for i = MajorTooltipStartLine, self.ScanTT:NumLines() do
 					CurrentLineText = _G['InspectArmoryScanTTTextLeft'..i]:GetText()
 					
-					if not CurrentLineText:find('"') then
+					if not CurrentLineText:find('"') and MinorArtifactSlot and MinorTooltipStartLine then						
 						self[MinorArtifactSlot].ReplaceTooltipLines[MinorTooltipStartLine] = CurrentLineText
 						
 						MinorTooltipStartLine = MinorTooltipStartLine + 1

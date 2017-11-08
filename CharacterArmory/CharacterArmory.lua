@@ -7,7 +7,7 @@ local _G = _G
 --local SLE, T, E, L, V, P, G = unpack(select(2, ...))
 local E, L, V, P, G = unpack(ElvUI)
 local KF, Info, Timer = unpack(ElvUI_AdvancedArmory)
-local ElvUI_BagModule = E:GetModule('Bags')
+local ElvUI_BagModule, ElvUI_DataBars = E:GetModule("Bags"), E:GetModule("DataBars")
 local Lib_Search = LibStub('LibItemSearch-1.2-ElvUI')
 --GLOBALS: CreateFrame, UIParent, SLE_ArmoryDB, hooksecurefunc, GetInventoryItemGems
 
@@ -1143,23 +1143,6 @@ end
 
 do --<< Artifact Monitor >>
 	local EnchantError, EnchantError_MainHand, EnchantError_SecondaryHand
-	local apItemCache = {}
-	local apStringValueMillion = {
-		["enUS"] = "(%d*[%p%s]?%d+) million",
-		["enGB"] = "(%d*[%p%s]?%d+) million",
-		["ptBR"] = "(%d*[%p%s]?%d+) [[milhão][milhões]]?",
-		["esMX"] = "(%d*[%p%s]?%d+) [[millón][millones]]?",
-		["deDE"] = "(%d*[%p%s]?%d+) [[Million][Millionen]]?",
-		["esES"] = "(%d*[%p%s]?%d+) [[millón][millones]]?",
-		["frFR"] = "(%d*[%p%s]?%d+) [[million][millions]]?",
-		["itIT"] = "(%d*[%p%s]?%d+) [[milione][milioni]]?",
-		["ruRU"] = "(%d*[%p%s]?%d+) млн",
-		["koKR"] = "(%d*[%p%s]?%d+)만",
-		["zhTW"] = "(%d*[%p%s]?%d+)萬",
-		["zhCN"] = "(%d*[%p%s]?%d+)万",
-	}
-	local apStringValueMillionLocal = apStringValueMillion[GetLocale()]
-	local empoweringSpellName = GetSpellInfo(227907)
 
 	function CA:LegionArtifactMonitor_UpdateLayout()
 		if Legion_ArtifactData.ItemID then
@@ -1312,100 +1295,33 @@ do --<< Artifact Monitor >>
 		end
 		return str
 	end
-	local PowerItemLink, SearchingText, SearchingPhase, CurrentItemPower, TotalPower, LowestPower, LowestPower_BagID, LowestPower_SlotID, LowestPower_Link
+	local PowerItemLink, SearchingText, SearchingPhase, CurrentItemPower, TotalPower
 	function CA:LegionArtifactMonitor_SearchPowerItem()
 		if not self.ArtifactMonitor.UpdateData then
 			CA:LegionArtifactMonitor_UpdateData()
 		end
+		if not self.ArtifactMonitor.BarExpected.InitialLoadCheck then
+			CA:LegionArtifactMonitor_UpdateData()
+			self.ArtifactMonitor.BarExpected.InitialLoadCheck = true
+		end
 		
-		LowestPower = nil
-		TotalPower = 0
+		-- LowestPower = nil
 		
 		if Legion_ArtifactData.ItemID then
-			for BagID = 0, NUM_BAG_SLOTS do
-				for SlotID = 1, GetContainerNumSlots(BagID) do
-					_, _, _, _, _, _, PowerItemLink = GetContainerItemInfo(BagID, SlotID)
-					
-					if PowerItemLink then
-						if GetItemInfo(PowerItemLink) then
-							-- print(GetItemInfo(PowerItemLink))
-							-- print(PowerItemLink)
-							CurrentItemPower = 0
-							if apItemCache[PowerItemLink] then
-								if apItemCache[PowerItemLink] ~= false then
-									CurrentItemPower = apItemCache[PowerItemLink]
-									if not LowestPower or LowestPower > CurrentItemPower then
-										LowestPower = CurrentItemPower
-										LowestPower_BagID = BagID
-										LowestPower_SlotID = SlotID
-										LowestPower_Link = PowerItemLink
-									end
-								end
-							else
-								local itemSpell = GetItemSpell(PowerItemLink)
-								if itemSpell and itemSpell == empoweringSpellName then
-									self:ClearTooltip(self.ArtifactMonitor.ScanTT)
-									local success = pcall(self.ArtifactMonitor.ScanTT.SetHyperlink, self.ArtifactMonitor.ScanTT, PowerItemLink)
-									if success then
-										local apFound
-										for i = 5, 1, -1 do
-											local tooltipText = _G["Knight_CharacterArmory_ArtifactScanTTTextLeft"..i]:GetText()
-											if tooltipText then
-												local digit1, digit2, digit3, ap
-												local value = string.match(tooltipText, apStringValueMillionLocal)
-												if value then
-													digit1, digit2 = string.match(value, "(%d+)[%p%s](%d+)")
-													if digit1 and digit2 then
-														ap = tonumber(format("%s.%s", digit1, digit2)) * 1e6 --Multiply by one million
-													else
-														ap = tonumber(value) * 1e6 --Multiply by one million
-													end
-												else
-													digit1, digit2, digit3 = string.match(tooltipText,"(%d+)[%p%s]?(%d+)[%p%s]?(%d+)")
-													ap = tonumber(format("%s%s%s", digit1 or "", digit2 or "", (digit2 and digit3) and digit3 or ""))
-												end
-												
-												if ap then
-													CurrentItemPower = ap
-													CurrentItemPower = tonumber(CurrentItemPower)
-													apItemCache[PowerItemLink] = CurrentItemPower
-													apFound = true
-													if not LowestPower or LowestPower > CurrentItemPower then
-														LowestPower = CurrentItemPower
-														LowestPower_BagID = BagID
-														LowestPower_SlotID = SlotID
-														LowestPower_Link = PowerItemLink
-													end
-													break
-												end
-											end
-										end
-										
-										if (not apFound) then
-											apItemCache[PowerItemLink] = false --Cache item as not granting AP
-										end
-									end
-								else
-									apItemCache[PowerItemLink] = false --Cache item as not granting AP
-								end
-							end
-							TotalPower = TotalPower + CurrentItemPower
-						end
-					end
-				end
-			end
+			TotalPower = ElvUI_DataBars:GetArtifactPowerInBags()
 
-			if LowestPower then
-				self.ArtifactMonitor.AddPower.Texture:Show()
-				self.ArtifactMonitor.AddPower.Button.Link = LowestPower_Link
-				
-				if LowestPower > 0 then
+			if TotalPower then
+
+				if TotalPower > 0 then
+					self.ArtifactMonitor.AddPower.Texture:Show()
 					if E.db.kfAA.Armory.Character.Artifact.ShortValues then
 						self.ArtifactMonitor.BarExpected.AvailablePower:SetText(KF:Color_Value('+'..E:ShortValue(TotalPower)))
 					else
 						self.ArtifactMonitor.BarExpected.AvailablePower:SetText(KF:Color_Value('+'..BreakUpLargeNumbers(TotalPower)))
 					end
 				else
+					self.ArtifactMonitor.AddPower.Texture:Hide()
+					self.ArtifactMonitor.AddPower.Texture:Hide()
 					self.ArtifactMonitor.BarExpected.AvailablePower:SetText()
 				end
 			else
@@ -1415,7 +1331,7 @@ do --<< Artifact Monitor >>
 				self.ArtifactMonitor.BarExpected.AvailablePower:SetText()
 				self:LegionArtifactMonitor_ClearPowerItemSearching()
 			end
-			
+
 			if Legion_ArtifactData.XP then
 				if TotalPower + Legion_ArtifactData.XP > Legion_ArtifactData.XPForNextPoint then
 					TotalPower = Legion_ArtifactData.XPForNextPoint
@@ -1423,7 +1339,7 @@ do --<< Artifact Monitor >>
 					TotalPower = TotalPower + Legion_ArtifactData.XP
 				end
 			end
-			
+
 			self.ArtifactMonitor.BarExpected:SetValue(TotalPower)
 		end
 		
@@ -1724,6 +1640,11 @@ KF.Modules.CharacterArmory = function()
 		_G["CharacterModelFrameBackgroundOverlay"]:SetPoint('BOTTOMRIGHT', CharacterModelFrame, 0, 0)
 	end
 
+	hooksecurefunc(E, "UpdateMedia", function(self)
+		CA.ArtifactMonitor.BarExpected:SetStatusBarColor(unpack(E.media.rgbvaluecolor))
+		CA:LegionArtifactMonitor_UpdateData()
+	end)
+	
 	CA:ElvOverlayToggle()
 	if KF._Compatibility["DejaCharacterStats"] then
 		PaperDollFrame.ExpandButton:SetFrameLevel(_G["CharacterModelFrame"]:GetFrameLevel() + 2)
